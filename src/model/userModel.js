@@ -60,6 +60,6 @@ userSchema.methods.GenerateRefreshToke = async function() {
         id:this._id
     },process.env.REFRESH_TOKEN_KEY,{expiresIn:"10d"})
 }
-
+console.log("nikhil")
 const userModel = mongoose.model("user",userSchema)
 export default userModel
