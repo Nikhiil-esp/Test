@@ -2,7 +2,7 @@ import statusCode from "http-status-codes"
 import userModel from "../model/userModel.js"
 import mongoose from "mongoose"
 import cookieParser from "cookie-parser"
-
+import TaskModel from "../model/TaskModel.js"
 
 
 const generateToken = async (userId) => {
@@ -230,6 +230,74 @@ const getAllTaskCreateByUser = async (req, res) => {
 };
 
 
+const getTaskListWithCustomSort = async (req, res) => {
+    try {
+        let taskList = await TaskModel.aggregate([
+            {
+                $addFields: {
+                    priorityOrder: {
+                        $switch: {
+                            branches: [
+                                { case: { $eq: ["$Priority", "high"] }, then: 1 },
+                                { case: { $eq: ["$Priority", "low"] }, then: 2 },
+                                { case: { $eq: ["$Priority", "in_progress"] }, then: 3 }
+                            ],
+                            default:1
+                        }
+                    }
+                }
+            },
+            {
+                $sort: {
+                    priorityOrder: 1,
+                    createdAt: -1   
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: taskList
+        });
+    } catch (error) {
+        console.error('Error sorting tasks by priority:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const getTasksGroupedByPriority = async (req, res) => {
+    try {
+        let taskList = await TaskModel.aggregate([
+            {
+                $group: {
+                    _id: "$priority", 
+                    tasks: { $push: "$$ROOT" }
+                }
+            },
+            {
+                $sort: {
+                    _id: 1 
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: taskList
+        });
+    } catch (error) {
+        console.error('Error grouping tasks:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+
 
 
 export {
@@ -237,7 +305,8 @@ export {
     loginUser,
     LogoutUser,
     updateUserPassword,
-    getAllTaskCreateByUser
+    getAllTaskCreateByUser,
+    getTaskListWithCustomSort
 }
 
 
