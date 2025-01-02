@@ -44,14 +44,16 @@ const createTask =async(req,res)=>{
 const updateTask =async(req,res)=>{
 
     try {
-           const {Task_id} =req.params
+           const {id} =req.params
+        
+        const user_id =req.user._id
            const {taskName,taskAssignUser,Priority}=req.body
-        let Task = await TaskModel.findByIdAndUpdate(Task_id,{
+        let Task = await TaskModel.findByIdAndUpdate(id,{
             $set:{
                 taskName,
                 taskAssignUser,
                 Priority,
-                authorId:id
+                authorId:user_id
             }
         })
         if (!Task) {
@@ -80,8 +82,8 @@ const updateTask =async(req,res)=>{
 const deleteTask =async(req,res)=>{
 
     try {
-           const {Task_id} =req.params
-        let Task = await TaskModel.findByIdAndDelete(Task_id)
+           const {id} =req.params
+        let Task = await TaskModel.findByIdAndDelete(id)
         if (!Task) {
             return res.status(statusCode.BAD_GATEWAY).json({
                 message: "task not deleted"

@@ -31,7 +31,8 @@ const RegisterUser = async (req, res) => {
             })
         }
         let userImage;
-        if (req.file.originalname.length > 0) {
+        // console.log(req.file)
+        if (req.file.originalname?.length > 0) {
             userImage = req.file.originalname
 
         }
@@ -65,7 +66,7 @@ const RegisterUser = async (req, res) => {
 
         return res.status(statusCode.INTERNAL_SERVER_ERROR).json({
             message: "internal server error",
-            data: result
+          
         })
     }
 }
@@ -189,11 +190,54 @@ const updateUserPassword = async (req, res) => {
     }
 }
 
+
+const getAllTaskCreateByUser = async (req, res) => {
+    try {
+        const { _id } = req.user;
+
+        let taskList = await userModel.aggregate([
+            {
+                $match: { _id: new mongoose.Types.ObjectId(_id) }
+            },
+            {
+                $lookup: {
+                    from: "tasks",      
+                    localField: "_id",      
+                    foreignField: "authorId",
+                    as: "task_list"          
+                }
+            },
+            {
+                $project:{
+                    name:1,
+                    email:1,
+                    task_list:1
+                }
+            }
+        ]);
+
+        res.status(statusCode.CREATED).json({
+            success: true,
+            data: taskList
+        });
+    } catch (error) {
+        console.error('Error fetching tasks:', error);
+        res.status(statusCode.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+
+
+
 export {
     RegisterUser,
     loginUser,
     LogoutUser,
-    updateUserPassword
+    updateUserPassword,
+    getAllTaskCreateByUser
 }
 
 
